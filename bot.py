@@ -34,7 +34,7 @@ async def connect_with_session(session_string: str):
     if user_client and user_client.is_connected:
         return
         
-    user_client = Client(u_session_string, api_id=API_ID, api_hash=API_HASH)
+    user_client = Client(session_name, api_id=API_ID, api_hash=API_HASH)
 
     try:
         await user_client.connect()
@@ -44,8 +44,8 @@ async def connect_with_session(session_string: str):
 
 
 async def login_user_client(_:Client,phone_number: str, message: Message):
-    global user_client, u_string_session
-    if n_user_client:
+    global user_client, u_session_string
+    if user_client:
         await message.reply("alredy loged")
         return
     user_id = message.chat.id
@@ -53,7 +53,7 @@ async def login_user_client(_:Client,phone_number: str, message: Message):
     phone_number = number.text
     try:
         await message.reply("📲 Sending OTP...")
-        n_user_client = Client(f"session_{user_id}", api_id, api_hash)
+        n_user_client = Client(session_name, api_id, api_hash)
         
         await n_user_client.connect()
     except Exception as e:

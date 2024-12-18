@@ -29,7 +29,7 @@ async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
     while not response_event:
         elapsed_time = time.time() - start_time
         if elapsed_time > timeout:
-            await client.send_message(user_id, "⏳ You took too long to respond!")
+            await client.send_message(user_id, f"⏳ You took too long to respond!\n{user_response}")
             user_response = None
             break
         await asyncio.sleep(1)  # Sleep for a short period to avoid blocking the event loop

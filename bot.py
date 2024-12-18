@@ -138,8 +138,8 @@ async def clone_channel(client, message: Message):
     try:
       ss_chat = await user_client.get_chat(source_chat_id)
       print(chat)
-    except:
-      await message.reply("❌️Source chat err")
+    except Exception as e:
+      await message.reply(f"❌️Source chat err {e}")
       return
     download_dir = "./downloads"
     os.makedirs(download_dir, exist_ok=True)

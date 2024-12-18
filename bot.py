@@ -144,14 +144,6 @@ async def clone_channel(client, message: Message):
     download_dir = "./downloads"
     os.makedirs(download_dir, exist_ok=True)
 
-    if msg.video:
-       file_name = msg.video.file_name or f"video_{msg.id}.mp4"
-    elif msg.document:
-       file_name = msg.document.file_name or f"document_{msg.id}"
-    else:
-       file_name = f"file_{msg.id}"
-
-    download_path = os.path.join(download_dir, file_name)
     try:
         await message.reply(f"📥 Cloning videos from `{source_chat_id}` to `{destination_chat_id}`...")
 
@@ -159,6 +151,14 @@ async def clone_channel(client, message: Message):
         async for msg in user_client.get_chat_history(source_chat_id):
                 if msg.video or (msg.document and "video" in msg.document.mime_type):
                     try:
+                        if msg.video:
+                            file_name = msg.video.file_name or f"video_{msg.id}.mp4"
+                        elif msg.document:
+                            file_name = msg.document.file_name or f"document_{msg.id}"
+                        else:
+                            file_name = f"file_{msg.id}"
+                        download_path = os.path.join(download_dir, file_name)
+
                         file_path = await user_client.download_media(msg, file_name=download_path)
                         caption = msg.caption or "Cloned via Bot"
                         await client.send_video(destination_chat_id, video=file_path, caption=caption, supports_streaming=True)

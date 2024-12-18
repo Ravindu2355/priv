@@ -42,22 +42,37 @@ async def connect_with_session(session_string: str):
     except Exception as e:
         print(f"Error reconnecting: {e}")
 
+response_event = asyncio.Event()
+user_response = None
+
 async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
     """
-    Manually implement the ask() functionality for older Pyrogram versions.
+    Simulate ask() functionality using an event loop and message handlers for newer Pyrogram versions.
     """
+    global user_response
+    user_response = None  # Reset the previous response
+
+    # Send the question to the user
     await client.send_message(user_id, question)
 
-    def check(_, msg: Message):
-        return msg.chat.id == user_id and msg.text  # Ensure the response is from the same user
+    # Define a custom message handler to capture the user's response
+    @client.on_message(filters.chat(user_id) & filters.text)
+    async def on_message(client, message: Message):
+        global user_response
+        if message.chat.id == user_id:
+            user_response = message.text
+            response_event.set()  # Signal that the response is received
 
+    # Wait for the response or timeout
     try:
-        response = await client.listen(filters.create(check), timeout=timeout)
-        return response.text
-    except TimeoutError:
+        await asyncio.wait_for(response_event.wait(), timeout=timeout)
+        return user_response
+    except asyncio.TimeoutError:
         await client.send_message(user_id, "⏳ You took too long to respond!")
-        raise
-
+        return None
+    finally:
+        # Remove the handler after the response is received
+        client.remove_handler(on_message)
 
 
 async def login_user_client(_,phone_number: str, message: Message):

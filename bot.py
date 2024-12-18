@@ -49,7 +49,7 @@ async def login_user_client(_,phone_number: str, message: Message):
         await message.reply("alredy loged")
         return
     user_id = message.chat.id
-    number = await _.ask(user_id, 'Please enter your phone number along with the country code. \nExample: +19876543210', filters=filters.text)   
+    number = await bot.ask(user_id, 'Please enter your phone number along with the country code. \nExample: +19876543210', filters=filters.text)   
     phone_number = number.text
     try:
         await message.reply("📲 Sending OTP...")

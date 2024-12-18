@@ -59,7 +59,7 @@ async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
 
     # Define a custom message handler to capture the user's response
     def on_message(client, message: Message):
-        nonlocal user_response
+        nonlocal user_response,response_event
         if message.chat.id == user_id:
             user_response = message.text
             response_event.set()  # Signal that the response is received
@@ -71,7 +71,8 @@ async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
         return user_response
     except asyncio.TimeoutError:
         await client.send_message(user_id, "⏳ You took too long to respond!")
-        return None
+        raise SomeException("No reply")
+        #return None
     finally:
         # Remove the handler after the response is received
         if handler_ref:

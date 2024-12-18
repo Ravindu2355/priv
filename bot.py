@@ -1,20 +1,87 @@
 import os
 import asyncio
 from pyrogram import Client, filters
-from pyrogram.errors import SessionPasswordNeeded, BadRequest, FloodWait
+#from pyrogram.errors import SessionPasswordNeeded, BadRequest, FloodWait
+from pyrogram.errors import (
+    ApiIdInvalid,
+    PhoneNumberInvalid,
+    PhoneCodeInvalid,
+    PhoneCodeExpired,
+    SessionPasswordNeeded,
+    PasswordHashInvalid,
+    FloodWait,
+    BadRequest
+)
 from pyrogram.types import Message
 
 # Environment variables for secure credentials
 BOT_API_TOKEN = os.getenv("tk")
 API_ID = int(os.getenv("apiid"))
 API_HASH = os.getenv("apihash")
+AuthU = os.getenv("auth")
+
 
 bot = Client("bot_client", bot_token=BOT_API_TOKEN, api_id=API_ID, api_hash=API_HASH)
 user_client = None
 session_name = "user_session"
+u_string_session = ""
 
 
-async def login_user_client(phone_number: str, chat: Message):
+async def login_user_client(_:Client,phone_number: str, message: Message):
+    global user_client, u_string_session
+    if n_user_client:
+        await message.reply("alredy loged")
+        return
+    user_id = message.chat.id
+    number = await _.ask(user_id, 'Please enter your phone number along with the country code. \nExample: +19876543210', filters=filters.text)   
+    phone_number = number.text
+    try:
+        await message.reply("📲 Sending OTP...")
+        n_user_client = Client(f"session_{user_id}", api_id, api_hash)
+        
+        await n_user_client.connect()
+    except Exception as e:
+        await message.reply(f"❌ Failed to send OTP {e}. Please wait and try again later.")
+    try:
+        code = await n_user_client.send_code(phone_number)
+    except ApiIdInvalid:
+        await message.reply('❌ Invalid combination of API ID and API HASH. Please restart the session.')
+        return
+    except PhoneNumberInvalid:
+        await message.reply('❌ Invalid phone number. Please restart the session.')
+        return
+    try:
+        otp_code = await _.ask(user_id, "Please check for an OTP in your official Telegram account. Once received, enter the OTP in the following format: \nIf the OTP is `12345`, please enter it as `1 2 3 4 5`.", filters=filters.text, timeout=600)
+    except TimeoutError:
+        await message.reply('⏰ Time limit of 10 minutes exceeded. Please restart the session.')
+        return
+    phone_code = otp_code.text.replace(" ", "")
+    try:
+        await n_user_client.sign_in(phone_number, code.phone_code_hash, phone_code)
+                
+    except PhoneCodeInvalid:
+        await message.reply('❌ Invalid OTP. Please restart the session.')
+        return
+    except PhoneCodeExpired:
+        await message.reply('❌ Expired OTP. Please restart the session.')
+        return
+    except SessionPasswordNeeded:
+        try:
+            two_step_msg = await _.ask(user_id, 'Your account has two-step verification enabled. Please enter your password.', filters=filters.text, timeout=300)
+        except TimeoutError:
+            await message.reply('⏰ Time limit of 5 minutes exceeded. Please restart the session.')
+            return
+        try:
+            password = two_step_msg.text
+            await n_user_client.check_password(password=password)
+        except PasswordHashInvalid:
+            await two_step_msg.reply('❌ Invalid password. Please restart the session.')
+            return
+    u_string_session = await n_user_client.export_session_string()
+    user_client = n_user_client
+
+
+async def lllogin_user_client(phone_number: str, chat: Message):
     """
     Initiates the user client login process.
     """
@@ -56,9 +123,12 @@ async def login_user_client(phone_number: str, chat: Message):
 
 @bot.on_message(filters.command("login") & filters.private)
 async def login_command(client, message: Message):
+    if str(message.chat.id) not in AuthU:
+        await message.reply("you are not my auther!")
+        return
     try:
         phone_number = message.text.split(" ", 1)[1]
-        await login_user_client(phone_number, message)
+        await login_user_client(client,phone_number, message)
     except IndexError:
         await message.reply("❌ Please provide a phone number. Usage: `/login <phone_number>`")
     except Exception as e:
@@ -67,6 +137,9 @@ async def login_command(client, message: Message):
 
 @bot.on_message(filters.command("clone_channel") & filters.private)
 async def clone_channel(client, message: Message):
+    if str(message.chat.id) not in AuthU:
+        await message.reply("you are not my auther!")
+        return
     global user_client
     if not user_client:
         await message.reply("❌ User client not logged in. Use `/login` first.")
@@ -110,6 +183,9 @@ async def clone_channel(client, message: Message):
 
 @bot.on_message(filters.command("get_chats") & filters.private)
 async def get_chats(client, message: Message):
+    if str(message.chat.id) not in AuthU:
+        await message.reply("you are not my auther!")
+        return
     """
     Retrieves a list of all chats (with names and IDs) the user account is a member of.
     """

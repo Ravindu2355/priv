@@ -50,7 +50,7 @@ async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
     """
     Simulate ask() functionality using an event loop and message handlers for newer Pyrogram versions.
     """
-    global user_response, handler_ref
+    global user_response, handler_ref, response_event
     user_response = None  # Reset the previous response
 
     # Send the question to the user

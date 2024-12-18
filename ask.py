@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, time
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
@@ -23,11 +23,11 @@ async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
     # Register the handler
     handler_ref = client.add_handler(filters.chat(user_id) & filters.text, on_message)
 
-    start_time = asyncio.get_event_loop().time()
-
+    #start_time = asyncio.get_event_loop().time()
+    start_time = time.time()
     # Wait for the response with a while loop to handle the timeout
     while not response_event:
-        elapsed_time = asyncio.get_event_loop().time() - start_time
+        elapsed_time = time.time() - start_time
         if elapsed_time > timeout:
             await client.send_message(user_id, "⏳ You took too long to respond!")
             user_response = None

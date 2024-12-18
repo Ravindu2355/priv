@@ -43,7 +43,7 @@ async def connect_with_session(session_string: str):
         print(f"Error reconnecting: {e}")
 
 
-async def login_user_client(_:Client,phone_number: str, message: Message):
+async def login_user_client(_,phone_number: str, message: Message):
     global user_client, u_session_string
     if user_client:
         await message.reply("alredy loged")

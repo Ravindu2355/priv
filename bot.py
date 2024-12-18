@@ -44,25 +44,26 @@ async def connect_with_session(session_string: str):
 
 response_event = asyncio.Event()
 user_response = None
+handler_ref = None
 
 async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
     """
     Simulate ask() functionality using an event loop and message handlers for newer Pyrogram versions.
     """
-    global user_response
+    global user_response, handler_ref
     user_response = None  # Reset the previous response
 
     # Send the question to the user
     await client.send_message(user_id, question)
 
     # Define a custom message handler to capture the user's response
-    @client.on_message(filters.chat(user_id) & filters.text)
     async def on_message(client, message: Message):
         global user_response
         if message.chat.id == user_id:
             user_response = message.text
             response_event.set()  # Signal that the response is received
 
+    handler_ref = client.add_handler(filters.chat(user_id) & filters.text, on_message)
     # Wait for the response or timeout
     try:
         await asyncio.wait_for(response_event.wait(), timeout=timeout)
@@ -72,7 +73,8 @@ async def ask(client: Client, user_id: int, question: str, timeout: int = 30):
         return None
     finally:
         # Remove the handler after the response is received
-        client.remove_handler(on_message)
+        if handler_ref:
+             client.remove_handler(handler_ref)
 
 
 async def login_user_client(_,phone_number: str, message: Message):

@@ -24,7 +24,23 @@ AuthU = os.getenv("auth")
 bot = Client("bot_client", bot_token=BOT_API_TOKEN, api_id=API_ID, api_hash=API_HASH)
 user_client = None
 session_name = "user_session"
-u_string_session = ""
+u_session_string = ""
+
+async def connect_with_session(session_string: str):
+    """
+    Reconnects the user client using a session string.
+    """
+    global user_client
+    if user_client and user_client.is_connected:
+        return
+        
+    user_client = Client(u_session_string, api_id=API_ID, api_hash=API_HASH)
+
+    try:
+        await user_client.connect()
+        print("User client reconnected successfully!")
+    except Exception as e:
+        print(f"Error reconnecting: {e}")
 
 
 async def login_user_client(_:Client,phone_number: str, message: Message):
@@ -77,7 +93,7 @@ async def login_user_client(_:Client,phone_number: str, message: Message):
         except PasswordHashInvalid:
             await two_step_msg.reply('❌ Invalid password. Please restart the session.')
             return
-    u_string_session = await n_user_client.export_session_string()
+    u_session_string = await n_user_client.export_session_string()
     user_client = n_user_client
 
 

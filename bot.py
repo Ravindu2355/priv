@@ -215,7 +215,7 @@ async def get_chats(client, message: Message):
         return
 
     try:
-        async with user_client:
+        #async with user_client:
             chats = []
             async for dialog in user_client.get_dialogs():
                 chat_name = dialog.chat.title or dialog.chat.first_name or "Unnamed Chat"

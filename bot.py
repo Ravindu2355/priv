@@ -55,7 +55,7 @@ async def login_user_client(_,phone_number: str, message: Message):
     #phone_number = number.text
     try:
         await message.reply("📲 Sending OTP...")
-        n_user_client = Client(session_name, api_id, api_hash)
+        n_user_client = Client(session_name, api_id=API_ID, api_hash=API_HASH)
         
         await n_user_client.connect()
     except Exception as e:

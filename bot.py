@@ -81,8 +81,8 @@ async def login_user_client(_,phone_number: str, message: Message):
         await message.reply("alredy loged")
         return
     user_id = message.chat.id
-    number = await ask(_,user_id, 'Please enter your phone number along with the country code. \nExample: +19876543210')   
-    phone_number = number.text
+    phone_number = await ask(_,user_id, 'Please enter your phone number along with the country code. \nExample: +19876543210')   
+    #phone_number = number.text
     try:
         await message.reply("📲 Sending OTP...")
         n_user_client = Client(session_name, api_id, api_hash)
@@ -103,7 +103,8 @@ async def login_user_client(_,phone_number: str, message: Message):
     except TimeoutError:
         await message.reply('⏰ Time limit of 10 minutes exceeded. Please restart the session.')
         return
-    phone_code = otp_code.text.replace(" ", "")
+    #phone_code = otp_code.text.replace(" ", "")
+    phone_code = otp_code.replace(" ", "")
     try:
         await n_user_client.sign_in(phone_number, code.phone_code_hash, phone_code)
                 
@@ -120,7 +121,8 @@ async def login_user_client(_,phone_number: str, message: Message):
             await message.reply('⏰ Time limit of 5 minutes exceeded. Please restart the session.')
             return
         try:
-            password = two_step_msg.text
+            #password = two_step_msg.text
+            password = two_step_msg
             await n_user_client.check_password(password=password)
         except PasswordHashInvalid:
             await two_step_msg.reply('❌ Invalid password. Please restart the session.')

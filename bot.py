@@ -101,44 +101,6 @@ async def login_user_client(_,phone_number: str, message: Message):
     user_client = n_user_client
     await message.reply("✅️✅️✅️✅️✅️")
 
-async def lllogin_user_client(phone_number: str, chat: Message):
-    """
-    Initiates the user client login process.
-    """
-    global user_client
-    user_client = Client(session_name, api_id=API_ID, api_hash=API_HASH)
-
-    try:
-        async with user_client:
-            await user_client.connect()
-            await user_client.send_code_request(phone_number)
-            await chat.reply("📩 Enter the OTP sent to your phone:")
-
-            @bot.on_message(filters.text & filters.private)
-            async def handle_otp(client, message: Message):
-                otp = message.text
-                try:
-                    await user_client.sign_in(phone_number, otp)
-                    await chat.reply("✅ Successfully logged in.")
-                    bot.remove_handler(handle_otp)
-                except SessionPasswordNeeded:
-                    await chat.reply("🔐 2FA is enabled. Enter your password:")
-                    bot.remove_handler(handle_otp)
-                    bot.add_handler(handle_2fa)
-
-            @bot.on_message(filters.text & filters.private)
-            async def handle_2fa(client, message: Message):
-                password = message.text
-                try:
-                    await user_client.check_password(password)
-                    await chat.reply("✅ Successfully logged in with 2FA.")
-                    bot.remove_handler(handle_2fa)
-                except BadRequest as e:
-                    await chat.reply(f"❌ Error during 2FA login: {e}")
-                    bot.remove_handler(handle_2fa)
-
-    except Exception as e:
-        await chat.reply(f"❌ Error: {e}")
 
 
 @bot.on_message(filters.command("login") & filters.private)
@@ -172,10 +134,24 @@ async def clone_channel(client, message: Message):
     except IndexError:
         await message.reply("❌ Usage: `/clone_channel <source_chat_id> [<destination_chat_id>]`")
         return
-
+        
+    try:
+      ss_chat = await user_client.get_chat(source_chat_id)
+      print(chat)
+    except:
+      await message.reply("❌️Source chat err")
+      return
     download_dir = "./downloads"
     os.makedirs(download_dir, exist_ok=True)
 
+    if msg.video:
+       file_name = msg.video.file_name or f"video_{msg.id}.mp4"
+    elif msg.document:
+       file_name = msg.document.file_name or f"document_{msg.id}"
+    else:
+       file_name = f"file_{msg.id}"
+
+    download_path = os.path.join(download_dir, file_name)
     try:
         await message.reply(f"📥 Cloning videos from `{source_chat_id}` to `{destination_chat_id}`...")
 
@@ -183,7 +159,7 @@ async def clone_channel(client, message: Message):
         async for msg in user_client.get_chat_history(source_chat_id):
                 if msg.video or (msg.document and "video" in msg.document.mime_type):
                     try:
-                        file_path = await user_client.download_media(msg, file_name=download_dir)
+                        file_path = await user_client.download_media(msg, file_name=download_path)
                         caption = msg.caption or "Cloned via Bot"
                         await client.send_video(destination_chat_id, video=file_path, caption=caption, supports_streaming=True)
                         os.remove(file_path)

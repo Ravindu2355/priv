@@ -137,7 +137,7 @@ async def clone_channel(client, message: Message):
         
     try:
       ss_chat = await user_client.get_chat(source_chat_id)
-      print(chat)
+      print(ss_chat)
     except Exception as e:
       await message.reply(f"❌️Source chat err {e}")
       return

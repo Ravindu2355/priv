@@ -12,7 +12,7 @@ from pyrogram.errors import (
     FloodWait,
     BadRequest
 )
-from ask import ask
+#from ask import ask
 from pyrogram.types import Message
 
 # Environment variables for secure credentials
@@ -51,8 +51,8 @@ async def login_user_client(_,phone_number: str, message: Message):
         await message.reply("alredy loged")
         return
     user_id = message.chat.id
-    phone_number = await ask(_,user_id, 'Please enter your phone number along with the country code. \nExample: +19876543210')   
-    #phone_number = number.text
+    number = await _.ask(chat_id=user_id,text= 'Please enter your phone number along with the country code. \nExample: +19876543210')   
+    phone_number = number.text
     try:
         await message.reply("📲 Sending OTP...")
         n_user_client = Client(session_name, api_id=API_ID, api_hash=API_HASH)
@@ -69,12 +69,12 @@ async def login_user_client(_,phone_number: str, message: Message):
         await message.reply('❌ Invalid phone number. Please restart the session.')
         return
     try:
-        otp_code = await ask(_,user_id, "Please check for an OTP in your official Telegram account. Once received, enter the OTP in the following format: \nIf the OTP is `12345`, please enter it as `1 2 3 4 5`.", timeout=600)
+        otp_code = await _.ask(chat_id=user_id, text="Please check for an OTP in your official Telegram account. Once received, enter the OTP in the following format: \nIf the OTP is `12345`, please enter it as `1 2 3 4 5`.", timeout=600)
     except TimeoutError:
         await message.reply('⏰ Time limit of 10 minutes exceeded. Please restart the session.')
         return
     #phone_code = otp_code.text.replace(" ", "")
-    phone_code = otp_code.replace(" ", "")
+    phone_code = otp_code.text.replace(" ", "")
     try:
         await n_user_client.sign_in(phone_number, code.phone_code_hash, phone_code)
                 
@@ -86,13 +86,13 @@ async def login_user_client(_,phone_number: str, message: Message):
         return
     except SessionPasswordNeeded:
         try:
-            two_step_msg = await ask(_,user_id, 'Your account has two-step verification enabled. Please enter your password.', timeout=300)
+            two_step_msg = await _.ask(chat_id=user_id,text= 'Your account has two-step verification enabled. Please enter your password.', timeout=300)
         except TimeoutError:
             await message.reply('⏰ Time limit of 5 minutes exceeded. Please restart the session.')
             return
         try:
-            #password = two_step_msg.text
-            password = two_step_msg
+            password = two_step_msg.text
+            #password = two_step_msg
             await n_user_client.check_password(password=password)
         except PasswordHashInvalid:
             await two_step_msg.reply('❌ Invalid password. Please restart the session.')

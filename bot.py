@@ -179,8 +179,8 @@ async def clone_channel(client, message: Message):
     try:
         await message.reply(f"📥 Cloning videos from `{source_chat_id}` to `{destination_chat_id}`...")
 
-        async with user_client:
-            async for msg in user_client.get_chat_history(source_chat_id):
+        #async with user_client:
+        async for msg in user_client.get_chat_history(source_chat_id):
                 if msg.video or (msg.document and "video" in msg.document.mime_type):
                     try:
                         file_path = await user_client.download_media(msg, file_name=download_dir)
